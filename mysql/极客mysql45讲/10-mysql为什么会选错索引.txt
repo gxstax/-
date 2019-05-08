@@ -1,0 +1,57 @@
+创建表t的脚本:
+
+	create table t (
+		id int(11) not null,
+		a int(11) DEFAULT NULL,
+		b int(11) DEFAULT NULL,
+		PRIMARY KEY (id),
+		KEY a(a),
+		KEY b(b)
+	)ENGINE=InnoDB;
+
+插入10万条记录的存储过程:
+	delimiter ;; 
+	create procedure idata()
+	begin
+		declare i int;
+		set i=1;
+		while(i<100000) do
+			insert into t values(i, i, i);
+			set i=i+1;
+		end while;
+	end;;
+	delimiter ;
+	call idata();
+
+分析语句：
+	mysql> select * from t where a between 10000 and 20000;
+	
+	理论上这条查询语句肯定是要用到索引a,这是毋庸置疑的，事实结果也是如此；
+	
+    那么我们来分析一下下面这种情况：
+	
+	-------------------------------------------------------------------
+	sessionA                      |             sessionB
+	-------------------------------------------------------------------
+	start transaction with        |       
+    consistent snapshot;          |
+	--------------------------------------------------------------------
+	                              | delete from t;    
+	                              | call idata();
+	--------------------------------------------------------------------
+	                              | explain select * from t where a 
+								  | between 10000 and 20000;
+    ---------------------------------------------------------------------
+    commit;	
+	---------------------------------------------------------------------
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
